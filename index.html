@@ -22,7 +22,6 @@
       --line: rgba(255,255,255,0.10);
       --good: #2dd4bf;
       --bad: #fb7185;
-      --warn: #fbbf24;
       --btn: rgba(255,255,255,0.10);
       --btn2: rgba(255,255,255,0.16);
       --shadow: 0 12px 30px rgba(0,0,0,0.35);
@@ -55,9 +54,7 @@
       justify-content: space-between;
       padding: 10px 0;
     }
-    .brand {
-      display: flex; align-items: center; gap: 10px;
-    }
+    .brand { display: flex; align-items: center; gap: 10px; }
     .logo {
       width: 38px; height: 38px; border-radius: 12px;
       background: linear-gradient(135deg, rgba(45,212,191,0.9), rgba(251,113,133,0.9));
@@ -81,12 +78,11 @@
       box-shadow: var(--shadow);
     }
     .card.pad { padding: 14px; }
+
     .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .field {
-      display: flex; flex-direction: column; gap: 6px;
-      min-width: 150px;
-    }
+    .field { display: flex; flex-direction: column; gap: 6px; min-width: 150px; }
     label { font-size: 12px; color: var(--muted); }
+
     select, input[type="number"], input[type="text"], input[type="date"] {
       width: 100%;
       padding: 10px 10px;
@@ -121,10 +117,7 @@
     .grid2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
     @media (max-width: 980px) { .grid2 { grid-template-columns: 1fr; } }
 
-    .title {
-      display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-      margin: 8px 0 10px;
-    }
+    .title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 8px 0 10px; }
     .title h2 { margin: 0; font-size: 16px; }
     .title p { margin: 0; font-size: 12px; color: var(--muted); }
 
@@ -172,13 +165,13 @@
     }
     td input.w90 { width: 90px; }
     td input.w110 { width: 110px; }
-    td input.w140 { width: 140px; }
     td input.date { width: 135px; text-align: left; font-family: var(--sans); }
     tr.totalRow td {
       background: rgba(255,255,255,0.05);
       font-weight: 700;
       border-top: 1px solid rgba(255,255,255,0.14);
     }
+
     .pill {
       display: inline-flex;
       padding: 6px 10px;
@@ -189,8 +182,8 @@
       color: var(--muted);
       font-family: var(--sans);
     }
-    .valueGood { color: var(--good); font-weight: 800; }
-    .valueBad { color: var(--bad); font-weight: 800; }
+    .valueGood { color: var(--good); font-weight: 900; }
+    .valueBad { color: var(--bad); font-weight: 900; }
     .muted { color: var(--muted); }
     .note { font-size: 12px; color: var(--muted); line-height: 1.35; }
 
@@ -226,8 +219,26 @@
       z-index: 50;
       max-width: 92vw;
     }
+
+    /* --- Cards --- */
+    #cardsWrap { display: none; }
+    .dayCard { margin-bottom: 12px; }
+    .cardHeader {
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .cardHeader .titleL { font-weight: 900; }
+    .twoCol {
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 520px) { .twoCol { grid-template-columns: 1fr; } }
+    .calcWrap { display:flex; gap:10px; flex-wrap:wrap; }
+    .calcWrap .pill b { color: var(--txt); }
   </style>
 </head>
+
 <body>
 <header>
   <div class="wrap">
@@ -263,11 +274,13 @@
           <input id="yearInput" type="number" inputmode="numeric" min="2020" max="2035" />
         </div>
 
-        <div class="field" style="min-width: 210px;">
+        <div class="field" style="min-width: 360px;">
           <label>Azioni</label>
           <div class="row" style="gap:8px;">
             <button class="btn primary" id="btnAddDay">+ Aggiungi giorno</button>
             <button class="btn danger" id="btnResetMonth">Reset mese</button>
+            <button class="btn" id="btnViewCards">Vista Card</button>
+            <button class="btn" id="btnViewTable">Vista Tabella</button>
           </div>
         </div>
 
@@ -276,7 +289,7 @@
         </div>
       </div>
       <div class="note" style="margin-top:10px;">
-        I dati vengono salvati automaticamente sul telefono per ogni <b>mese/anno</b>. Funziona anche offline dopo il primo caricamento.
+        Suggerimento: su iPhone usa <b>Vista Card</b> (niente scroll a destra). Su Mac puoi usare <b>Vista Tabella</b>.
       </div>
     </div>
   </div>
@@ -288,12 +301,13 @@
       <div class="title">
         <div>
           <h2>Tabella Mese</h2>
-          <p class="muted">Tocca i campi per inserire i valori. Le colonne calcolate si aggiornano da sole.</p>
+          <p class="muted">Inserisci i valori: le colonne calcolate si aggiornano da sole.</p>
         </div>
         <div class="pill" id="rowsCount">0 giorni</div>
       </div>
 
-      <div class="tableWrap">
+      <!-- TABLE MODE -->
+      <div class="tableWrap" id="tableWrap">
         <table id="mainTable">
           <thead>
             <tr>
@@ -316,6 +330,9 @@
           <tfoot id="tableFoot"></tfoot>
         </table>
       </div>
+
+      <!-- CARD MODE -->
+      <div id="cardsWrap"></div>
     </section>
 
     <section class="card pad">
@@ -331,11 +348,12 @@
           <div class="muted" style="font-size:12px;">Nome</div>
           <div class="muted" style="font-size:12px; text-align:right;">Importo</div>
         </div>
+
         <div id="expensesList"></div>
 
         <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.10); padding-top: 12px;">
           <div class="footerRow">
-            <div style="font-weight:800;">Totale Spese Mese</div>
+            <div style="font-weight:900;">Totale Spese Mese</div>
             <div id="totalExpenses" class="pill" style="font-family:var(--mono);">0,00</div>
           </div>
 
@@ -364,6 +382,7 @@
 <script>
 /* =========================
    ARCA PWA - FULL VERSION
+   + VIEW: TABLE / CARDS
    ========================= */
 
 const MONTHS = [
@@ -380,6 +399,8 @@ const rowsCount   = $("rowsCount");
 
 const tableBody   = $("tableBody");
 const tableFoot   = $("tableFoot");
+const tableWrap   = $("tableWrap");
+const cardsWrap   = $("cardsWrap");
 
 const expensesList = $("expensesList");
 const totalExpensesEl = $("totalExpenses");
@@ -391,6 +412,9 @@ const btnExportCSV = $("btnExportCSV");
 const btnBackup = $("btnBackup");
 const importFile = $("importFile");
 const toast = $("toast");
+
+const btnViewCards = $("btnViewCards");
+const btnViewTable = $("btnViewTable");
 
 let deferredPrompt = null;
 
@@ -429,25 +453,17 @@ function loadState() {
   const k = keyFor(mi, year);
   const raw = localStorage.getItem(k);
   if (!raw) {
-    return {
-      entries: [],
-      expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 }))
-    };
+    return { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
   }
   try {
     const parsed = JSON.parse(raw);
-    // garantisci 15 righe spese
     if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
     while (parsed.expenses.length < 15) parsed.expenses.push({ name: "", amount: 0 });
     if (parsed.expenses.length > 15) parsed.expenses = parsed.expenses.slice(0, 15);
-
     if (!Array.isArray(parsed.entries)) parsed.entries = [];
     return parsed;
   } catch {
-    return {
-      entries: [],
-      expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 }))
-    };
+    return { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
   }
 }
 
@@ -462,6 +478,15 @@ function saveState(state) {
 
 function sortEntries(entries) {
   return entries.slice().sort((a,b) => (a.date || "").localeCompare(b.date || ""));
+}
+
+// View mode
+function getViewMode() {
+  return localStorage.getItem("arca_view_mode") || "cards"; // default: cards
+}
+function setViewMode(mode) {
+  localStorage.setItem("arca_view_mode", mode);
+  render();
 }
 
 // Formule (le tue)
@@ -479,9 +504,7 @@ function calc(entry) {
   const diff = bustaEffetiva - lekNeBustatTona;
   const kassaforta = bustaEffetiva - banca;
 
-  return {
-    banca, lekNeTeZeze, lekNeKassaforte, lekNeBustatTona, diff, kassaforta
-  };
+  return { banca, lekNeTeZeze, lekNeKassaforte, lekNeBustatTona, diff, kassaforta };
 }
 
 function totals(entries) {
@@ -511,19 +534,15 @@ function totalExpenses(expenses) {
   return expenses.reduce((s, x) => s + toNumber(x.amount), 0);
 }
 
-function render() {
-  const state = loadState();
-  const entries = sortEntries(state.entries);
-  rowsCount.textContent = `${entries.length} giorni`;
-
-  // --------- TABELLA PRINCIPALE ----------
+/* ---------- RENDER TABLE MODE ---------- */
+function renderTable(state, entries) {
   tableBody.innerHTML = "";
+
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     const c = calc(e);
 
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td class="left"><input class="date" type="date" value="${e.date || ""}" data-i="${i}" data-f="date"></td>
       <td><input class="w110" type="number" inputmode="decimal" value="${toNumber(e.docVendita)}" data-i="${i}" data-f="docVendita"></td>
@@ -543,15 +562,11 @@ function render() {
       <td><span class="${Math.abs(c.diff) < 0.01 ? "valueGood" : "valueBad"}">${formatIT(c.diff)}</span></td>
       <td>${formatIT(c.kassaforta)}</td>
 
-      <td class="left">
-        <button class="btn small danger" data-del="${i}">Elimina</button>
-      </td>
+      <td class="left"><button class="btn small danger" data-del="${i}">Elimina</button></td>
     `;
-
     tableBody.appendChild(tr);
   }
 
-  // Totali riga
   const tt = totals(entries);
   tableFoot.innerHTML = `
     <tr class="totalRow">
@@ -571,7 +586,156 @@ function render() {
     </tr>
   `;
 
-  // --------- SPESE MESE (15 righe) ----------
+  attachTableEvents(state);
+}
+
+/* ---------- RENDER CARD MODE ---------- */
+function renderCards(state, entries) {
+  cardsWrap.innerHTML = "";
+
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    const c = calc(e);
+
+    const card = document.createElement("div");
+    card.className = "card pad dayCard";
+
+    card.innerHTML = `
+      <div class="cardHeader">
+        <div class="titleL">Giorno</div>
+        <input class="date" type="date" value="${e.date || ""}" data-i="${i}" data-f="date" style="width:170px;">
+      </div>
+
+      <div class="twoCol">
+        <div>
+          <label>Doc Vendita</label>
+          <input type="number" inputmode="decimal" value="${toNumber(e.docVendita)}" data-i="${i}" data-f="docVendita">
+        </div>
+        <div>
+          <label>POS</label>
+          <input type="number" inputmode="decimal" value="${toNumber(e.pos)}" data-i="${i}" data-f="pos">
+        </div>
+        <div>
+          <label>Tot del Giorno</label>
+          <input type="number" inputmode="decimal" value="${toNumber(e.totDelGiorno)}" data-i="${i}" data-f="totDelGiorno">
+        </div>
+        <div>
+          <label>Spesa</label>
+          <input type="number" inputmode="decimal" value="${toNumber(e.spesa)}" data-i="${i}" data-f="spesa">
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label>Busta Effetiva</label>
+          <input type="number" inputmode="decimal" value="${toNumber(e.bustaEffetiva)}" data-i="${i}" data-f="bustaEffetiva">
+        </div>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <div class="calcWrap">
+        <div class="pill">Banca: <b>${formatIT(c.banca)}</b></div>
+        <div class="pill">Lek ne te zeze: <b>${formatIT(c.lekNeTeZeze)}</b></div>
+        <div class="pill">Lek ne kassaforte: <b>${formatIT(c.lekNeKassaforte)}</b></div>
+        <div class="pill">Lek ne bustat tona: <b>${formatIT(c.lekNeBustatTona)}</b></div>
+        <div class="pill">Diff: <b class="${Math.abs(c.diff) < 0.01 ? "valueGood" : "valueBad"}">${formatIT(c.diff)}</b></div>
+        <div class="pill">Kassaforta: <b>${formatIT(c.kassaforta)}</b></div>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <button class="btn small danger" data-del="${i}">Elimina giorno</button>
+    `;
+
+    cardsWrap.appendChild(card);
+  }
+
+  attachCardEvents(state);
+}
+
+/* ---------- EVENTS: TABLE ---------- */
+function attachTableEvents(state) {
+  tableBody.querySelectorAll("input[data-i]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = Number(inp.dataset.i);
+      const f = inp.dataset.f;
+
+      const sorted = sortEntries(state.entries);
+      const target = sorted[i];
+      if (!target) return;
+
+      if (f === "date") target.date = inp.value;
+      else target[f] = toNumber(inp.value);
+
+      state.entries = sorted;
+      saveState(state);
+      render();
+    });
+  });
+
+  tableBody.querySelectorAll("button[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.del);
+      const sorted = sortEntries(state.entries);
+      sorted.splice(i, 1);
+      state.entries = sorted;
+      saveState(state);
+      showToast("Giorno eliminato");
+      render();
+    });
+  });
+}
+
+/* ---------- EVENTS: CARDS ---------- */
+function attachCardEvents(state) {
+  cardsWrap.querySelectorAll("input[data-i]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = Number(inp.dataset.i);
+      const f = inp.dataset.f;
+
+      const sorted = sortEntries(state.entries);
+      const target = sorted[i];
+      if (!target) return;
+
+      if (f === "date") target.date = inp.value;
+      else target[f] = toNumber(inp.value);
+
+      state.entries = sorted;
+      saveState(state);
+      render();
+    });
+  });
+
+  cardsWrap.querySelectorAll("button[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.del);
+      const sorted = sortEntries(state.entries);
+      sorted.splice(i, 1);
+      state.entries = sorted;
+      saveState(state);
+      showToast("Giorno eliminato");
+      render();
+    });
+  });
+}
+
+/* ---------- RENDER ALL ---------- */
+function render() {
+  const state = loadState();
+  const entries = sortEntries(state.entries);
+  rowsCount.textContent = `${entries.length} giorni`;
+
+  const mode = getViewMode();
+
+  if (mode === "cards") {
+    tableWrap.style.display = "none";
+    cardsWrap.style.display = "block";
+    renderCards(state, entries);
+  } else {
+    tableWrap.style.display = "block";
+    cardsWrap.style.display = "none";
+    renderTable(state, entries);
+  }
+
+  // Spese mese
   expensesList.innerHTML = "";
   for (let i = 0; i < state.expenses.length; i++) {
     const x = state.expenses[i];
@@ -584,59 +748,6 @@ function render() {
     expensesList.appendChild(row);
   }
 
-  const te = totalExpenses(state.expenses);
-  totalExpensesEl.textContent = formatIT(te);
-
-  const soldi = tt.kassaforta - te; // SOLDI IN CASA = Totale Kassaforta - Totale Spese Mese
-  soldiInCasaEl.textContent = formatIT(soldi);
-  soldiInCasaEl.classList.toggle("valueGood", soldi > 0.009);
-  soldiInCasaEl.classList.toggle("valueBad", soldi < -0.009);
-  if (Math.abs(soldi) <= 0.009) {
-    soldiInCasaEl.classList.remove("valueGood");
-    soldiInCasaEl.classList.remove("valueBad");
-  }
-
-  // Aggancia eventi
-  attachEvents(entries, state);
-}
-
-function attachEvents(entriesSorted, state) {
-  // Input tabella giorni
-  tableBody.querySelectorAll("input[data-i]").forEach(inp => {
-    inp.addEventListener("input", () => {
-      const i = Number(inp.dataset.i);
-      const f = inp.dataset.f;
-      const entries = sortEntries(state.entries); // riallinea con render
-      // mappa indice render -> entry reale: perché render è già sortato
-      // quindi prendiamo entry sortata, troviamo in state.entries e aggiorniamo lì
-      const target = entries[i];
-      if (!target) return;
-
-      if (f === "date") target.date = inp.value;
-      else target[f] = toNumber(inp.value);
-
-      // riscrivi state.entries preservando eventuale ordine
-      // (facciamo semplice: settiamo direttamente l’array sortato come nuovo)
-      state.entries = entries;
-      saveState(state);
-      render();
-    });
-  });
-
-  // Elimina riga
-  tableBody.querySelectorAll("button[data-del]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const i = Number(btn.dataset.del);
-      const entries = sortEntries(state.entries);
-      entries.splice(i, 1);
-      state.entries = entries;
-      saveState(state);
-      showToast("Giorno eliminato");
-      render();
-    });
-  });
-
-  // Input spese mese
   expensesList.querySelectorAll("input[data-ex-i]").forEach(inp => {
     inp.addEventListener("input", () => {
       const i = Number(inp.dataset.exI);
@@ -648,8 +759,19 @@ function attachEvents(entriesSorted, state) {
       render();
     });
   });
+
+  const tt = totals(entries);
+  const te = totalExpenses(state.expenses);
+  totalExpensesEl.textContent = formatIT(te);
+
+  const soldi = tt.kassaforta - te; // SOLDI IN CASA
+  soldiInCasaEl.textContent = formatIT(soldi);
+  soldiInCasaEl.classList.remove("valueGood","valueBad");
+  if (soldi > 0.009) soldiInCasaEl.classList.add("valueGood");
+  else if (soldi < -0.009) soldiInCasaEl.classList.add("valueBad");
 }
 
+/* ---------- ACTIONS ---------- */
 function addDay() {
   const state = loadState();
   state.entries.push({
@@ -668,10 +790,7 @@ function addDay() {
 function resetMonth() {
   const ok = confirm("Vuoi cancellare TUTTI i dati del mese selezionato?");
   if (!ok) return;
-  const state = {
-    entries: [],
-    expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 }))
-  };
+  const state = { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
   saveState(state);
   showToast("Mese resettato");
   render();
@@ -684,10 +803,7 @@ function exportCSV() {
   const te = totalExpenses(state.expenses);
   const soldi = tt.kassaforta - te;
 
-  function f(v) {
-    // usa punto nel CSV
-    return (Number(v||0)).toFixed(2).replace(",", ".");
-  }
+  function f(v) { return (Number(v||0)).toFixed(2).replace(",", "."); }
 
   const header = [
     "Data","Doc Vendita","POS","Tot del Giorno","Banca",
@@ -748,7 +864,6 @@ function exportCSV() {
   const mi = String(toNumber(monthSelect.value) + 1).padStart(2, "0");
   const fileName = `Arca_${yearInput.value}_${mi}.csv`;
 
-  // iOS: usa Web Share se disponibile
   const file = new File([blob], fileName, { type: "text/csv" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     navigator.share({ files: [file], title: "Arca CSV" }).catch(()=>{});
@@ -808,9 +923,9 @@ function importJSON(file) {
   reader.readAsText(file);
 }
 
-// Init
+/* ---------- INIT ---------- */
 function init() {
-  // Mesi
+  // mesi
   monthSelect.innerHTML = "";
   MONTHS.forEach((m, i) => {
     const opt = document.createElement("option");
@@ -819,12 +934,12 @@ function init() {
     monthSelect.appendChild(opt);
   });
 
-  // Default mese/anno attuali
+  // default mese/anno
   const d = new Date();
   monthSelect.value = d.getMonth();
   yearInput.value = d.getFullYear();
 
-  // Eventi
+  // eventi
   monthSelect.addEventListener("change", render);
   yearInput.addEventListener("change", render);
 
@@ -840,17 +955,24 @@ function init() {
     importFile.value = "";
   });
 
-  // PWA install prompt (Android/desktop). iOS usa "Aggiungi a Home"
+  // view mode
+  btnViewCards.addEventListener("click", () => {
+    setViewMode("cards");
+    showToast("Vista Card");
+  });
+  btnViewTable.addEventListener("click", () => {
+    setViewMode("table");
+    showToast("Vista Tabella");
+  });
+
+  // PWA install prompt (android/desktop)
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
     const b = $("btnInstall");
     b.style.display = "inline-flex";
     b.addEventListener("click", async () => {
-      try {
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
-      } catch {}
+      try { deferredPrompt.prompt(); await deferredPrompt.userChoice; } catch {}
       deferredPrompt = null;
       b.style.display = "none";
     }, { once: true });
