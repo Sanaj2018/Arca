@@ -188,12 +188,12 @@
     .note { font-size: 12px; color: var(--muted); line-height: 1.35; }
 
     /* Spese dinamiche */
-    .expensesGrid {
-      display: grid;
-      grid-template-columns: 1fr 150px 92px;
-      gap: 8px;
-      align-items: center;
-    }
+   .expensesGrid {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px 90px;
+  gap: 8px;
+  align-items: center;
+}
     @media (max-width: 520px) {
       .expensesGrid { grid-template-columns: 1fr 1fr; }
       .expensesGrid .btn { grid-column: 1 / -1; }
@@ -719,7 +719,7 @@ function attachCardEvents(state) {
 /* ---------- SPESE DINAMICHE ---------- */
 function addExpense() {
   const state = loadState();
-  state.expenses.push({ name: "", amount: 0 });
+  state.expenses.push({ date: todayISO(), name: "", amount: 0 });
   saveState(state);
   showToast("Spesa aggiunta");
   render();
@@ -752,10 +752,11 @@ function renderExpenses(state) {
     const row = document.createElement("div");
     row.className = "expensesGrid";
     row.innerHTML = `
-      <input type="text" placeholder="Nome spesa..." value="${x.name || ""}" data-ex-i="${i}" data-ex-f="name" />
-      <input type="number" inputmode="decimal" value="${toNumber(x.amount)}" data-ex-i="${i}" data-ex-f="amount" />
-      <button class="btn small danger" data-ex-del="${i}">Elimina</button>
-    `;
+  <input type="date" value="${x.date || ""}" data-ex-i="${i}" data-ex-f="date" />
+  <input type="text" placeholder="Nome spesa..." value="${x.name || ""}" data-ex-i="${i}" data-ex-f="name" />
+  <input type="number" inputmode="decimal" value="${toNumber(x.amount)}" data-ex-i="${i}" data-ex-f="amount" />
+  <button class="btn small danger" data-ex-del="${i}">Elimina</button>
+`;
     expensesList.appendChild(row);
   }
 
@@ -764,8 +765,10 @@ function renderExpenses(state) {
       const i = Number(inp.dataset.exI);
       const f = inp.dataset.exF;
       if (!state.expenses[i]) return;
-      if (f === "name") state.expenses[i].name = inp.value;
+      if (f === "date") state.expenses[i].date = inp.value;
+      else if (f === "name") state.expenses[i].name = inp.value;
       else state.expenses[i].amount = toNumber(inp.value);
+
       saveState(state);
       render();
     });
@@ -892,11 +895,11 @@ function exportCSV() {
   ].join(","));
 
   lines.push("");
-  lines.push("Spesa Mese,Importo");
-  for (const x of state.expenses) {
-    const name = String(x.name || "").replaceAll(",", " ");
-    lines.push(`${name},${f(x.amount)}`);
-  }
+  llines.push("Data,Spesa Mese,Importo");
+for (const x of state.expenses) {
+  const name = String(x.name || "").replaceAll(",", " ");
+  lines.push(`${x.date || ""},${name},${f(x.amount)}`);
+}
   lines.push(`Totale Spese Mese,${f(te)}`);
   lines.push(`SOLDI IN CASA,${f(soldi)}`);
 
