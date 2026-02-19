@@ -187,10 +187,16 @@
     .muted { color: var(--muted); }
     .note { font-size: 12px; color: var(--muted); line-height: 1.35; }
 
+    /* Spese dinamiche */
     .expensesGrid {
       display: grid;
-      grid-template-columns: 1fr 180px;
+      grid-template-columns: 1fr 150px 92px;
       gap: 8px;
+      align-items: center;
+    }
+    @media (max-width: 520px) {
+      .expensesGrid { grid-template-columns: 1fr 1fr; }
+      .expensesGrid .btn { grid-column: 1 / -1; }
     }
     .expensesGrid input[type="text"] { font-family: var(--sans); }
     .expensesGrid input[type="number"] { text-align: right; font-family: var(--mono); }
@@ -220,7 +226,7 @@
       max-width: 92vw;
     }
 
-    /* --- Cards --- */
+    /* Cards */
     #cardsWrap { display: none; }
     .dayCard { margin-bottom: 12px; }
     .cardHeader {
@@ -289,7 +295,7 @@
         </div>
       </div>
       <div class="note" style="margin-top:10px;">
-        ✅ Fix tastiera iPhone: i dati si aggiornano quando <b>esci dal campo</b> (non ad ogni cifra).
+        ✅ Tastiera iPhone: i dati si aggiornano quando <b>esci dal campo</b>.
       </div>
     </div>
   </div>
@@ -339,7 +345,11 @@
       <div class="title">
         <div>
           <h2>Spesa Mese</h2>
-          <p class="muted">15 righe (Nome + Importo). In fondo la somma.</p>
+          <p class="muted">Aggiungi le spese quando servono (senza 15 righe fisse).</p>
+        </div>
+        <div class="row" style="gap:8px;">
+          <button class="btn small primary" id="btnAddExpense">+ Aggiungi spesa</button>
+          <button class="btn small danger" id="btnResetExpenses">Reset spese</button>
         </div>
       </div>
 
@@ -347,6 +357,7 @@
         <div class="expensesGrid" style="margin-bottom:10px;">
           <div class="muted" style="font-size:12px;">Nome</div>
           <div class="muted" style="font-size:12px; text-align:right;">Importo</div>
+          <div class="muted" style="font-size:12px; text-align:right;">Azioni</div>
         </div>
 
         <div id="expensesList"></div>
@@ -371,7 +382,7 @@
       </div>
 
       <div class="note" style="margin-top: 14px;">
-        <b>Export CSV</b> include: tabella mese (con Totale), Spesa Mese (15 righe + Totale) e SOLDI IN CASA.
+        <b>Export CSV</b> include: tabella mese (con Totale), Spesa Mese (tutte le righe) + Totale e SOLDI IN CASA.
       </div>
     </section>
   </div>
@@ -411,6 +422,9 @@ const toast = $("toast");
 const btnViewCards = $("btnViewCards");
 const btnViewTable = $("btnViewTable");
 
+const btnAddExpense = $("btnAddExpense");
+const btnResetExpenses = $("btnResetExpenses");
+
 let deferredPrompt = null;
 
 function showToast(msg) {
@@ -446,17 +460,15 @@ function loadState() {
   const mi = toNumber(monthSelect.value);
   const k = keyFor(mi, year);
   const raw = localStorage.getItem(k);
-  if (!raw) return { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
+  if (!raw) return { entries: [], expenses: [] };
 
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
-    while (parsed.expenses.length < 15) parsed.expenses.push({ name: "", amount: 0 });
-    if (parsed.expenses.length > 15) parsed.expenses = parsed.expenses.slice(0, 15);
     if (!Array.isArray(parsed.entries)) parsed.entries = [];
+    if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
     return parsed;
   } catch {
-    return { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
+    return { entries: [], expenses: [] };
   }
 }
 
@@ -481,6 +493,7 @@ function setViewMode(mode) {
   render();
 }
 
+// Formule
 function calc(entry) {
   const docVendita = toNumber(entry.docVendita);
   const pos = toNumber(entry.pos);
@@ -525,6 +538,7 @@ function totalExpenses(expenses) {
   return expenses.reduce((s, x) => s + toNumber(x.amount), 0);
 }
 
+/* ---------- TABLE MODE ---------- */
 function renderTable(state, entries) {
   tableBody.innerHTML = "";
   for (let i = 0; i < entries.length; i++) {
@@ -578,6 +592,39 @@ function renderTable(state, entries) {
   attachTableEvents(state);
 }
 
+function attachTableEvents(state) {
+  tableBody.querySelectorAll("input[data-i]").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const i = Number(inp.dataset.i);
+      const f = inp.dataset.f;
+
+      const sorted = sortEntries(state.entries);
+      const target = sorted[i];
+      if (!target) return;
+
+      if (f === "date") target.date = inp.value;
+      else target[f] = toNumber(inp.value);
+
+      state.entries = sorted;
+      saveState(state);
+      render();
+    });
+  });
+
+  tableBody.querySelectorAll("button[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.del);
+      const sorted = sortEntries(state.entries);
+      sorted.splice(i, 1);
+      state.entries = sorted;
+      saveState(state);
+      showToast("Giorno eliminato");
+      render();
+    });
+  });
+}
+
+/* ---------- CARD MODE ---------- */
 function renderCards(state, entries) {
   cardsWrap.innerHTML = "";
   for (let i = 0; i < entries.length; i++) {
@@ -636,39 +683,6 @@ function renderCards(state, entries) {
   attachCardEvents(state);
 }
 
-// ✅ FIX iPhone: usiamo CHANGE (non INPUT) per non perdere la tastiera
-function attachTableEvents(state) {
-  tableBody.querySelectorAll("input[data-i]").forEach(inp => {
-    inp.addEventListener("change", () => {
-      const i = Number(inp.dataset.i);
-      const f = inp.dataset.f;
-
-      const sorted = sortEntries(state.entries);
-      const target = sorted[i];
-      if (!target) return;
-
-      if (f === "date") target.date = inp.value;
-      else target[f] = toNumber(inp.value);
-
-      state.entries = sorted;
-      saveState(state);
-      render();
-    });
-  });
-
-  tableBody.querySelectorAll("button[data-del]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const i = Number(btn.dataset.del);
-      const sorted = sortEntries(state.entries);
-      sorted.splice(i, 1);
-      state.entries = sorted;
-      saveState(state);
-      showToast("Giorno eliminato");
-      render();
-    });
-  });
-}
-
 function attachCardEvents(state) {
   cardsWrap.querySelectorAll("input[data-i]").forEach(inp => {
     inp.addEventListener("change", () => {
@@ -701,6 +715,73 @@ function attachCardEvents(state) {
   });
 }
 
+/* ---------- SPESE DINAMICHE ---------- */
+function addExpense() {
+  const state = loadState();
+  state.expenses.push({ name: "", amount: 0 });
+  saveState(state);
+  showToast("Spesa aggiunta");
+  render();
+}
+
+function resetExpenses() {
+  const ok = confirm("Vuoi cancellare TUTTE le spese del mese selezionato?");
+  if (!ok) return;
+  const state = loadState();
+  state.expenses = [];
+  saveState(state);
+  showToast("Spese resettate");
+  render();
+}
+
+function renderExpenses(state) {
+  expensesList.innerHTML = "";
+
+  if (!state.expenses.length) {
+    const empty = document.createElement("div");
+    empty.className = "note";
+    empty.innerHTML = "Nessuna spesa inserita. Premi <b>+ Aggiungi spesa</b>.";
+    expensesList.appendChild(empty);
+    return;
+  }
+
+  for (let i = 0; i < state.expenses.length; i++) {
+    const x = state.expenses[i];
+
+    const row = document.createElement("div");
+    row.className = "expensesGrid";
+    row.innerHTML = `
+      <input type="text" placeholder="Nome spesa..." value="${x.name || ""}" data-ex-i="${i}" data-ex-f="name" />
+      <input type="number" inputmode="decimal" value="${toNumber(x.amount)}" data-ex-i="${i}" data-ex-f="amount" />
+      <button class="btn small danger" data-ex-del="${i}">Elimina</button>
+    `;
+    expensesList.appendChild(row);
+  }
+
+  expensesList.querySelectorAll("input[data-ex-i]").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const i = Number(inp.dataset.exI);
+      const f = inp.dataset.exF;
+      if (!state.expenses[i]) return;
+      if (f === "name") state.expenses[i].name = inp.value;
+      else state.expenses[i].amount = toNumber(inp.value);
+      saveState(state);
+      render();
+    });
+  });
+
+  expensesList.querySelectorAll("button[data-ex-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.exDel);
+      state.expenses.splice(i, 1);
+      saveState(state);
+      showToast("Spesa eliminata");
+      render();
+    });
+  });
+}
+
+/* ---------- RENDER ALL ---------- */
 function render() {
   const state = loadState();
   const entries = sortEntries(state.entries);
@@ -717,35 +798,10 @@ function render() {
     renderTable(state, entries);
   }
 
-  // Spese mese
-  expensesList.innerHTML = "";
-  for (let i = 0; i < state.expenses.length; i++) {
-    const x = state.expenses[i];
-    const row = document.createElement("div");
-    row.className = "expensesGrid";
-    row.innerHTML = `
-      <input type="text" placeholder="Nome spesa..." value="${x.name || ""}" data-ex-i="${i}" data-ex-f="name" />
-      <input type="number" inputmode="decimal" value="${toNumber(x.amount)}" data-ex-i="${i}" data-ex-f="amount" />
-    `;
-    expensesList.appendChild(row);
-  }
-
-  // ✅ FIX iPhone: anche qui CHANGE
-  expensesList.querySelectorAll("input[data-ex-i]").forEach(inp => {
-    inp.addEventListener("change", () => {
-      const i = Number(inp.dataset.exI);
-      const f = inp.dataset.exF;
-      if (!state.expenses[i]) return;
-      if (f === "name") state.expenses[i].name = inp.value;
-      else state.expenses[i].amount = toNumber(inp.value);
-      saveState(state);
-      render();
-    });
-  });
+  renderExpenses(state);
 
   const tt = totals(entries);
   const te = totalExpenses(state.expenses);
-
   totalExpensesEl.textContent = formatIT(te);
 
   const soldi = tt.kassaforta - te;
@@ -755,6 +811,7 @@ function render() {
   else if (soldi < -0.009) soldiInCasaEl.classList.add("valueBad");
 }
 
+/* ---------- AZIONI MESE ---------- */
 function addDay() {
   const state = loadState();
   state.entries.push({
@@ -771,14 +828,15 @@ function addDay() {
 }
 
 function resetMonth() {
-  const ok = confirm("Vuoi cancellare TUTTI i dati del mese selezionato?");
+  const ok = confirm("Vuoi cancellare TUTTI i dati del mese selezionato? (giorni + spese)");
   if (!ok) return;
-  const state = { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
+  const state = { entries: [], expenses: [] };
   saveState(state);
   showToast("Mese resettato");
   render();
 }
 
+/* ---------- EXPORT / BACKUP ---------- */
 function exportCSV() {
   const state = loadState();
   const entries = sortEntries(state.entries);
@@ -893,8 +951,6 @@ function importJSON(file) {
       if (!parsed || typeof parsed !== "object") throw new Error("JSON non valido");
       if (!Array.isArray(parsed.entries)) parsed.entries = [];
       if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
-      while (parsed.expenses.length < 15) parsed.expenses.push({ name: "", amount: 0 });
-      if (parsed.expenses.length > 15) parsed.expenses = parsed.expenses.slice(0,15);
       saveState(parsed);
       showToast("Import completato");
       render();
@@ -905,6 +961,7 @@ function importJSON(file) {
   reader.readAsText(file);
 }
 
+/* ---------- INIT ---------- */
 function init() {
   monthSelect.innerHTML = "";
   MONTHS.forEach((m, i) => {
@@ -923,6 +980,9 @@ function init() {
 
   btnAddDay.addEventListener("click", addDay);
   btnResetMonth.addEventListener("click", resetMonth);
+
+  btnAddExpense.addEventListener("click", addExpense);
+  btnResetExpenses.addEventListener("click", resetExpenses);
 
   btnExportCSV.addEventListener("click", exportCSV);
   btnBackup.addEventListener("click", backupJSON);
