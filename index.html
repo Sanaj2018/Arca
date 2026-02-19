@@ -289,7 +289,7 @@
         </div>
       </div>
       <div class="note" style="margin-top:10px;">
-        Suggerimento: su iPhone usa <b>Vista Card</b> (niente scroll a destra). Su Mac puoi usare <b>Vista Tabella</b>.
+        ✅ Fix tastiera iPhone: i dati si aggiornano quando <b>esci dal campo</b> (non ad ogni cifra).
       </div>
     </div>
   </div>
@@ -380,11 +380,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* =========================
-   ARCA PWA - FULL VERSION
-   + VIEW: TABLE / CARDS
-   ========================= */
-
 const MONTHS = [
   "Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
   "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"
@@ -441,7 +436,6 @@ function todayISO() {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 
-// Storage per mese/anno
 function keyFor(monthIndex, year) {
   const mm = String(monthIndex + 1).padStart(2, "0");
   return `arca_v1_${year}_${mm}`;
@@ -452,9 +446,8 @@ function loadState() {
   const mi = toNumber(monthSelect.value);
   const k = keyFor(mi, year);
   const raw = localStorage.getItem(k);
-  if (!raw) {
-    return { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
-  }
+  if (!raw) return { entries: [], expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 })) };
+
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
@@ -480,16 +473,14 @@ function sortEntries(entries) {
   return entries.slice().sort((a,b) => (a.date || "").localeCompare(b.date || ""));
 }
 
-// View mode
 function getViewMode() {
-  return localStorage.getItem("arca_view_mode") || "cards"; // default: cards
+  return localStorage.getItem("arca_view_mode") || "cards";
 }
 function setViewMode(mode) {
   localStorage.setItem("arca_view_mode", mode);
   render();
 }
 
-// Formule (le tue)
 function calc(entry) {
   const docVendita = toNumber(entry.docVendita);
   const pos = toNumber(entry.pos);
@@ -534,10 +525,8 @@ function totalExpenses(expenses) {
   return expenses.reduce((s, x) => s + toNumber(x.amount), 0);
 }
 
-/* ---------- RENDER TABLE MODE ---------- */
 function renderTable(state, entries) {
   tableBody.innerHTML = "";
-
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     const c = calc(e);
@@ -589,17 +578,14 @@ function renderTable(state, entries) {
   attachTableEvents(state);
 }
 
-/* ---------- RENDER CARD MODE ---------- */
 function renderCards(state, entries) {
   cardsWrap.innerHTML = "";
-
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     const c = calc(e);
 
     const card = document.createElement("div");
     card.className = "card pad dayCard";
-
     card.innerHTML = `
       <div class="cardHeader">
         <div class="titleL">Giorno</div>
@@ -644,17 +630,16 @@ function renderCards(state, entries) {
 
       <button class="btn small danger" data-del="${i}">Elimina giorno</button>
     `;
-
     cardsWrap.appendChild(card);
   }
 
   attachCardEvents(state);
 }
 
-/* ---------- EVENTS: TABLE ---------- */
+// ✅ FIX iPhone: usiamo CHANGE (non INPUT) per non perdere la tastiera
 function attachTableEvents(state) {
   tableBody.querySelectorAll("input[data-i]").forEach(inp => {
-    inp.addEventListener("input", () => {
+    inp.addEventListener("change", () => {
       const i = Number(inp.dataset.i);
       const f = inp.dataset.f;
 
@@ -684,10 +669,9 @@ function attachTableEvents(state) {
   });
 }
 
-/* ---------- EVENTS: CARDS ---------- */
 function attachCardEvents(state) {
   cardsWrap.querySelectorAll("input[data-i]").forEach(inp => {
-    inp.addEventListener("input", () => {
+    inp.addEventListener("change", () => {
       const i = Number(inp.dataset.i);
       const f = inp.dataset.f;
 
@@ -717,14 +701,12 @@ function attachCardEvents(state) {
   });
 }
 
-/* ---------- RENDER ALL ---------- */
 function render() {
   const state = loadState();
   const entries = sortEntries(state.entries);
   rowsCount.textContent = `${entries.length} giorni`;
 
   const mode = getViewMode();
-
   if (mode === "cards") {
     tableWrap.style.display = "none";
     cardsWrap.style.display = "block";
@@ -748,8 +730,9 @@ function render() {
     expensesList.appendChild(row);
   }
 
+  // ✅ FIX iPhone: anche qui CHANGE
   expensesList.querySelectorAll("input[data-ex-i]").forEach(inp => {
-    inp.addEventListener("input", () => {
+    inp.addEventListener("change", () => {
       const i = Number(inp.dataset.exI);
       const f = inp.dataset.exF;
       if (!state.expenses[i]) return;
@@ -762,16 +745,16 @@ function render() {
 
   const tt = totals(entries);
   const te = totalExpenses(state.expenses);
+
   totalExpensesEl.textContent = formatIT(te);
 
-  const soldi = tt.kassaforta - te; // SOLDI IN CASA
+  const soldi = tt.kassaforta - te;
   soldiInCasaEl.textContent = formatIT(soldi);
   soldiInCasaEl.classList.remove("valueGood","valueBad");
   if (soldi > 0.009) soldiInCasaEl.classList.add("valueGood");
   else if (soldi < -0.009) soldiInCasaEl.classList.add("valueBad");
 }
 
-/* ---------- ACTIONS ---------- */
 function addDay() {
   const state = loadState();
   state.entries.push({
@@ -912,7 +895,6 @@ function importJSON(file) {
       if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
       while (parsed.expenses.length < 15) parsed.expenses.push({ name: "", amount: 0 });
       if (parsed.expenses.length > 15) parsed.expenses = parsed.expenses.slice(0,15);
-
       saveState(parsed);
       showToast("Import completato");
       render();
@@ -923,9 +905,7 @@ function importJSON(file) {
   reader.readAsText(file);
 }
 
-/* ---------- INIT ---------- */
 function init() {
-  // mesi
   monthSelect.innerHTML = "";
   MONTHS.forEach((m, i) => {
     const opt = document.createElement("option");
@@ -934,12 +914,10 @@ function init() {
     monthSelect.appendChild(opt);
   });
 
-  // default mese/anno
   const d = new Date();
   monthSelect.value = d.getMonth();
   yearInput.value = d.getFullYear();
 
-  // eventi
   monthSelect.addEventListener("change", render);
   yearInput.addEventListener("change", render);
 
@@ -955,17 +933,9 @@ function init() {
     importFile.value = "";
   });
 
-  // view mode
-  btnViewCards.addEventListener("click", () => {
-    setViewMode("cards");
-    showToast("Vista Card");
-  });
-  btnViewTable.addEventListener("click", () => {
-    setViewMode("table");
-    showToast("Vista Tabella");
-  });
+  btnViewCards.addEventListener("click", () => { setViewMode("cards"); showToast("Vista Card"); });
+  btnViewTable.addEventListener("click", () => { setViewMode("table"); showToast("Vista Tabella"); });
 
-  // PWA install prompt (android/desktop)
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
@@ -980,7 +950,6 @@ function init() {
 
   render();
 
-  // Service Worker
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(()=>{});
   }
