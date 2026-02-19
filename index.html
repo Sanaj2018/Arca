@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111111" />
+  <title>Arca</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: rgba(255,255,255,0.06);
+      --card2: rgba(255,255,255,0.08);
+      --txt: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.65);
+      --line: rgba(255,255,255,0.10);
+      --good: #2dd4bf;
+      --bad: #fb7185;
+      --warn: #fbbf24;
+      --btn: rgba(255,255,255,0.10);
+      --btn2: rgba(255,255,255,0.16);
+      --shadow: 0 12px 30px rgba(0,0,0,0.35);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 700px at 10% 0%, rgba(45,212,191,0.10), transparent 60%),
+                  radial-gradient(900px 600px at 90% 20%, rgba(251,113,133,0.10), transparent 55%),
+                  var(--bg);
+      color: var(--txt);
+      font-family: var(--sans);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(12px);
+      background: rgba(11,12,16,0.72);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 14px 14px 22px; }
+    .topbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(45,212,191,0.9), rgba(251,113,133,0.9));
+      box-shadow: var(--shadow);
+    }
+    .brand h1 { font-size: 18px; margin: 0; letter-spacing: 0.2px; }
+    .brand .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card.pad { padding: 14px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .field {
+      display: flex; flex-direction: column; gap: 6px;
+      min-width: 150px;
+    }
+    label { font-size: 12px; color: var(--muted); }
+    select, input[type="number"], input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      color: var(--txt);
+      outline: none;
+    }
+    input[type="number"] { font-family: var(--mono); }
+    input::placeholder { color: rgba(255,255,255,0.35); }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--btn);
+      color: var(--txt);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:hover { background: var(--btn2); }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(45,212,191,0.22), rgba(251,113,133,0.18));
+      border-color: rgba(255,255,255,0.18);
+    }
+    .btn.danger { background: rgba(251,113,133,0.12); border-color: rgba(251,113,133,0.28); }
+    .btn.good { background: rgba(45,212,191,0.14); border-color: rgba(45,212,191,0.30); }
+    .btn.small { padding: 7px 10px; border-radius: 10px; font-size: 13px; }
+    .right { margin-left: auto; }
+
+    .grid2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+    @media (max-width: 980px) { .grid2 { grid-template-columns: 1fr; } }
+
+    .title {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+      margin: 8px 0 10px;
+    }
+    .title h2 { margin: 0; font-size: 16px; }
+    .title p { margin: 0; font-size: 12px; color: var(--muted); }
+
+    .tableWrap {
+      overflow: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 1150px;
+    }
+    th, td {
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 10px 10px;
+      text-align: right;
+      white-space: nowrap;
+      vertical-align: middle;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(15,16,22,0.92);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.86);
+      font-family: var(--sans);
+      font-size: 12px;
+      letter-spacing: 0.2px;
+    }
+    th.left, td.left { text-align: left; font-family: var(--sans); }
+    td input {
+      width: 120px;
+      padding: 8px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+      color: var(--txt);
+      font-family: var(--mono);
+      text-align: right;
+    }
+    td input.w90 { width: 90px; }
+    td input.w110 { width: 110px; }
+    td input.w140 { width: 140px; }
+    td input.date { width: 135px; text-align: left; font-family: var(--sans); }
+    tr.totalRow td {
+      background: rgba(255,255,255,0.05);
+      font-weight: 700;
+      border-top: 1px solid rgba(255,255,255,0.14);
+    }
+    .pill {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--sans);
+    }
+    .valueGood { color: var(--good); font-weight: 800; }
+    .valueBad { color: var(--bad); font-weight: 800; }
+    .muted { color: var(--muted); }
+    .note { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+    .expensesGrid {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 8px;
+    }
+    .expensesGrid input[type="text"] { font-family: var(--sans); }
+    .expensesGrid input[type="number"] { text-align: right; font-family: var(--mono); }
+
+    .footerRow {
+      display: flex; gap: 10px; align-items: center; justify-content: space-between;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      background: rgba(20,20,28,0.92);
+      color: var(--txt);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      display: none;
+      z-index: 50;
+      max-width: 92vw;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Arca</h1>
+          <div class="sub">WebApp – Mese / Spese / CSV / Offline</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn small good" id="btnInstall" style="display:none;">Installa</button>
+        <button class="btn small" id="btnExportCSV">Export CSV</button>
+        <button class="btn small" id="btnBackup">Backup JSON</button>
+        <label class="btn small" for="importFile" style="display:inline-flex; align-items:center; gap:8px;">
+          Import JSON
+        </label>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+      </div>
+    </div>
+
+    <div class="card pad">
+      <div class="row">
+        <div class="field" style="min-width: 180px;">
+          <label>Mese</label>
+          <select id="monthSelect"></select>
+        </div>
+
+        <div class="field" style="min-width: 140px;">
+          <label>Anno</label>
+          <input id="yearInput" type="number" inputmode="numeric" min="2020" max="2035" />
+        </div>
+
+        <div class="field" style="min-width: 210px;">
+          <label>Azioni</label>
+          <div class="row" style="gap:8px;">
+            <button class="btn primary" id="btnAddDay">+ Aggiungi giorno</button>
+            <button class="btn danger" id="btnResetMonth">Reset mese</button>
+          </div>
+        </div>
+
+        <div class="right">
+          <span class="pill" id="statusPill">Pronto</span>
+        </div>
+      </div>
+      <div class="note" style="margin-top:10px;">
+        I dati vengono salvati automaticamente sul telefono per ogni <b>mese/anno</b>. Funziona anche offline dopo il primo caricamento.
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid2">
+    <section class="card pad">
+      <div class="title">
+        <div>
+          <h2>Tabella Mese</h2>
+          <p class="muted">Tocca i campi per inserire i valori. Le colonne calcolate si aggiornano da sole.</p>
+        </div>
+        <div class="pill" id="rowsCount">0 giorni</div>
+      </div>
+
+      <div class="tableWrap">
+        <table id="mainTable">
+          <thead>
+            <tr>
+              <th class="left">Data</th>
+              <th>Doc Vendita</th>
+              <th>POS</th>
+              <th>Tot del Giorno</th>
+              <th>Banca</th>
+              <th>Lek ne te zeze</th>
+              <th>Spesa</th>
+              <th>Lek ne kassaforte</th>
+              <th>Lek ne bustat tona</th>
+              <th>Busta Effetiva</th>
+              <th>Diff</th>
+              <th>Kassaforta</th>
+              <th class="left">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+          <tfoot id="tableFoot"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="card pad">
+      <div class="title">
+        <div>
+          <h2>Spesa Mese</h2>
+          <p class="muted">15 righe (Nome + Importo). In fondo la somma.</p>
+        </div>
+      </div>
+
+      <div class="card pad" style="background: var(--card2); border-radius: 14px;">
+        <div class="expensesGrid" style="margin-bottom:10px;">
+          <div class="muted" style="font-size:12px;">Nome</div>
+          <div class="muted" style="font-size:12px; text-align:right;">Importo</div>
+        </div>
+        <div id="expensesList"></div>
+
+        <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.10); padding-top: 12px;">
+          <div class="footerRow">
+            <div style="font-weight:800;">Totale Spese Mese</div>
+            <div id="totalExpenses" class="pill" style="font-family:var(--mono);">0,00</div>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <div class="footerRow">
+            <div style="font-weight:900;">SOLDI IN CASA</div>
+            <div id="soldiInCasa" class="pill" style="font-family:var(--mono); font-weight:900;">0,00</div>
+          </div>
+
+          <div class="note" style="margin-top: 10px;">
+            Formula: <b>SOLDI IN CASA = Totale Kassaforta − Totale Spese Mese</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top: 14px;">
+        <b>Export CSV</b> include: tabella mese (con Totale), Spesa Mese (15 righe + Totale) e SOLDI IN CASA.
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================
+   ARCA PWA - FULL VERSION
+   ========================= */
+
+const MONTHS = [
+  "Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
+  "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"
+];
+
+const $ = (id) => document.getElementById(id);
+
+const monthSelect = $("monthSelect");
+const yearInput   = $("yearInput");
+const statusPill  = $("statusPill");
+const rowsCount   = $("rowsCount");
+
+const tableBody   = $("tableBody");
+const tableFoot   = $("tableFoot");
+
+const expensesList = $("expensesList");
+const totalExpensesEl = $("totalExpenses");
+const soldiInCasaEl = $("soldiInCasa");
+
+const btnAddDay = $("btnAddDay");
+const btnResetMonth = $("btnResetMonth");
+const btnExportCSV = $("btnExportCSV");
+const btnBackup = $("btnBackup");
+const importFile = $("importFile");
+const toast = $("toast");
+
+let deferredPrompt = null;
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.style.display = "block";
+  setTimeout(() => toast.style.display = "none", 2200);
+}
+
+function formatIT(n) {
+  const v = Number(n || 0);
+  return v.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function toNumber(v) {
+  if (v === "" || v == null) return 0;
+  const n = Number(String(v).replace(",", "."));
+  return isFinite(n) ? n : 0;
+}
+
+function todayISO() {
+  const d = new Date();
+  const pad = (x) => String(x).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// Storage per mese/anno
+function keyFor(monthIndex, year) {
+  const mm = String(monthIndex + 1).padStart(2, "0");
+  return `arca_v1_${year}_${mm}`;
+}
+
+function loadState() {
+  const year = toNumber(yearInput.value);
+  const mi = toNumber(monthSelect.value);
+  const k = keyFor(mi, year);
+  const raw = localStorage.getItem(k);
+  if (!raw) {
+    return {
+      entries: [],
+      expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 }))
+    };
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    // garantisci 15 righe spese
+    if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
+    while (parsed.expenses.length < 15) parsed.expenses.push({ name: "", amount: 0 });
+    if (parsed.expenses.length > 15) parsed.expenses = parsed.expenses.slice(0, 15);
+
+    if (!Array.isArray(parsed.entries)) parsed.entries = [];
+    return parsed;
+  } catch {
+    return {
+      entries: [],
+      expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 }))
+    };
+  }
+}
+
+function saveState(state) {
+  const year = toNumber(yearInput.value);
+  const mi = toNumber(monthSelect.value);
+  const k = keyFor(mi, year);
+  localStorage.setItem(k, JSON.stringify(state));
+  statusPill.textContent = "Salvato";
+  setTimeout(() => statusPill.textContent = "Pronto", 700);
+}
+
+function sortEntries(entries) {
+  return entries.slice().sort((a,b) => (a.date || "").localeCompare(b.date || ""));
+}
+
+// Formule (le tue)
+function calc(entry) {
+  const docVendita = toNumber(entry.docVendita);
+  const pos = toNumber(entry.pos);
+  const totDelGiorno = toNumber(entry.totDelGiorno);
+  const spesa = toNumber(entry.spesa);
+  const bustaEffetiva = toNumber(entry.bustaEffetiva);
+
+  const banca = docVendita - pos;
+  const lekNeTeZeze = totDelGiorno - docVendita;
+  const lekNeKassaforte = lekNeTeZeze - spesa;
+  const lekNeBustatTona = totDelGiorno - pos - spesa;
+  const diff = bustaEffetiva - lekNeBustatTona;
+  const kassaforta = bustaEffetiva - banca;
+
+  return {
+    banca, lekNeTeZeze, lekNeKassaforte, lekNeBustatTona, diff, kassaforta
+  };
+}
+
+function totals(entries) {
+  const t = {
+    docVendita: 0, pos: 0, totDelGiorno: 0, spesa: 0, bustaEffetiva: 0,
+    banca: 0, lekNeTeZeze: 0, lekNeKassaforte: 0, lekNeBustatTona: 0, diff: 0, kassaforta: 0
+  };
+  for (const e of entries) {
+    t.docVendita += toNumber(e.docVendita);
+    t.pos += toNumber(e.pos);
+    t.totDelGiorno += toNumber(e.totDelGiorno);
+    t.spesa += toNumber(e.spesa);
+    t.bustaEffetiva += toNumber(e.bustaEffetiva);
+
+    const c = calc(e);
+    t.banca += c.banca;
+    t.lekNeTeZeze += c.lekNeTeZeze;
+    t.lekNeKassaforte += c.lekNeKassaforte;
+    t.lekNeBustatTona += c.lekNeBustatTona;
+    t.diff += c.diff;
+    t.kassaforta += c.kassaforta;
+  }
+  return t;
+}
+
+function totalExpenses(expenses) {
+  return expenses.reduce((s, x) => s + toNumber(x.amount), 0);
+}
+
+function render() {
+  const state = loadState();
+  const entries = sortEntries(state.entries);
+  rowsCount.textContent = `${entries.length} giorni`;
+
+  // --------- TABELLA PRINCIPALE ----------
+  tableBody.innerHTML = "";
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    const c = calc(e);
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td class="left"><input class="date" type="date" value="${e.date || ""}" data-i="${i}" data-f="date"></td>
+      <td><input class="w110" type="number" inputmode="decimal" value="${toNumber(e.docVendita)}" data-i="${i}" data-f="docVendita"></td>
+      <td><input class="w90" type="number" inputmode="decimal" value="${toNumber(e.pos)}" data-i="${i}" data-f="pos"></td>
+      <td><input class="w110" type="number" inputmode="decimal" value="${toNumber(e.totDelGiorno)}" data-i="${i}" data-f="totDelGiorno"></td>
+
+      <td>${formatIT(c.banca)}</td>
+      <td>${formatIT(c.lekNeTeZeze)}</td>
+
+      <td><input class="w90" type="number" inputmode="decimal" value="${toNumber(e.spesa)}" data-i="${i}" data-f="spesa"></td>
+
+      <td>${formatIT(c.lekNeKassaforte)}</td>
+      <td>${formatIT(c.lekNeBustatTona)}</td>
+
+      <td><input class="w110" type="number" inputmode="decimal" value="${toNumber(e.bustaEffetiva)}" data-i="${i}" data-f="bustaEffetiva"></td>
+
+      <td><span class="${Math.abs(c.diff) < 0.01 ? "valueGood" : "valueBad"}">${formatIT(c.diff)}</span></td>
+      <td>${formatIT(c.kassaforta)}</td>
+
+      <td class="left">
+        <button class="btn small danger" data-del="${i}">Elimina</button>
+      </td>
+    `;
+
+    tableBody.appendChild(tr);
+  }
+
+  // Totali riga
+  const tt = totals(entries);
+  tableFoot.innerHTML = `
+    <tr class="totalRow">
+      <td class="left">TOTALE</td>
+      <td>${formatIT(tt.docVendita)}</td>
+      <td>${formatIT(tt.pos)}</td>
+      <td>${formatIT(tt.totDelGiorno)}</td>
+      <td>${formatIT(tt.banca)}</td>
+      <td>${formatIT(tt.lekNeTeZeze)}</td>
+      <td>${formatIT(tt.spesa)}</td>
+      <td>${formatIT(tt.lekNeKassaforte)}</td>
+      <td>${formatIT(tt.lekNeBustatTona)}</td>
+      <td>${formatIT(tt.bustaEffetiva)}</td>
+      <td><span class="${Math.abs(tt.diff) < 0.01 ? "valueGood" : "valueBad"}">${formatIT(tt.diff)}</span></td>
+      <td>${formatIT(tt.kassaforta)}</td>
+      <td class="left"></td>
+    </tr>
+  `;
+
+  // --------- SPESE MESE (15 righe) ----------
+  expensesList.innerHTML = "";
+  for (let i = 0; i < state.expenses.length; i++) {
+    const x = state.expenses[i];
+    const row = document.createElement("div");
+    row.className = "expensesGrid";
+    row.innerHTML = `
+      <input type="text" placeholder="Nome spesa..." value="${x.name || ""}" data-ex-i="${i}" data-ex-f="name" />
+      <input type="number" inputmode="decimal" value="${toNumber(x.amount)}" data-ex-i="${i}" data-ex-f="amount" />
+    `;
+    expensesList.appendChild(row);
+  }
+
+  const te = totalExpenses(state.expenses);
+  totalExpensesEl.textContent = formatIT(te);
+
+  const soldi = tt.kassaforta - te; // SOLDI IN CASA = Totale Kassaforta - Totale Spese Mese
+  soldiInCasaEl.textContent = formatIT(soldi);
+  soldiInCasaEl.classList.toggle("valueGood", soldi > 0.009);
+  soldiInCasaEl.classList.toggle("valueBad", soldi < -0.009);
+  if (Math.abs(soldi) <= 0.009) {
+    soldiInCasaEl.classList.remove("valueGood");
+    soldiInCasaEl.classList.remove("valueBad");
+  }
+
+  // Aggancia eventi
+  attachEvents(entries, state);
+}
+
+function attachEvents(entriesSorted, state) {
+  // Input tabella giorni
+  tableBody.querySelectorAll("input[data-i]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = Number(inp.dataset.i);
+      const f = inp.dataset.f;
+      const entries = sortEntries(state.entries); // riallinea con render
+      // mappa indice render -> entry reale: perché render è già sortato
+      // quindi prendiamo entry sortata, troviamo in state.entries e aggiorniamo lì
+      const target = entries[i];
+      if (!target) return;
+
+      if (f === "date") target.date = inp.value;
+      else target[f] = toNumber(inp.value);
+
+      // riscrivi state.entries preservando eventuale ordine
+      // (facciamo semplice: settiamo direttamente l’array sortato come nuovo)
+      state.entries = entries;
+      saveState(state);
+      render();
+    });
+  });
+
+  // Elimina riga
+  tableBody.querySelectorAll("button[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.del);
+      const entries = sortEntries(state.entries);
+      entries.splice(i, 1);
+      state.entries = entries;
+      saveState(state);
+      showToast("Giorno eliminato");
+      render();
+    });
+  });
+
+  // Input spese mese
+  expensesList.querySelectorAll("input[data-ex-i]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = Number(inp.dataset.exI);
+      const f = inp.dataset.exF;
+      if (!state.expenses[i]) return;
+      if (f === "name") state.expenses[i].name = inp.value;
+      else state.expenses[i].amount = toNumber(inp.value);
+      saveState(state);
+      render();
+    });
+  });
+}
+
+function addDay() {
+  const state = loadState();
+  state.entries.push({
+    date: todayISO(),
+    docVendita: 0,
+    pos: 0,
+    totDelGiorno: 0,
+    spesa: 0,
+    bustaEffetiva: 0
+  });
+  saveState(state);
+  showToast("Giorno aggiunto");
+  render();
+}
+
+function resetMonth() {
+  const ok = confirm("Vuoi cancellare TUTTI i dati del mese selezionato?");
+  if (!ok) return;
+  const state = {
+    entries: [],
+    expenses: Array.from({length: 15}, () => ({ name: "", amount: 0 }))
+  };
+  saveState(state);
+  showToast("Mese resettato");
+  render();
+}
+
+function exportCSV() {
+  const state = loadState();
+  const entries = sortEntries(state.entries);
+  const tt = totals(entries);
+  const te = totalExpenses(state.expenses);
+  const soldi = tt.kassaforta - te;
+
+  function f(v) {
+    // usa punto nel CSV
+    return (Number(v||0)).toFixed(2).replace(",", ".");
+  }
+
+  const header = [
+    "Data","Doc Vendita","POS","Tot del Giorno","Banca",
+    "Lek ne te zeze","Spesa","Lek ne kassaforte","Lek ne bustat tona",
+    "Busta Effetiva","Diff","Kassaforta"
+  ].join(",");
+
+  const lines = [];
+  lines.push(`Arca,${yearInput.value},${MONTHS[toNumber(monthSelect.value)]}`);
+  lines.push("");
+  lines.push(header);
+
+  for (const e of entries) {
+    const c = calc(e);
+    lines.push([
+      e.date || "",
+      f(e.docVendita),
+      f(e.pos),
+      f(e.totDelGiorno),
+      f(c.banca),
+      f(c.lekNeTeZeze),
+      f(e.spesa),
+      f(c.lekNeKassaforte),
+      f(c.lekNeBustatTona),
+      f(e.bustaEffetiva),
+      f(c.diff),
+      f(c.kassaforta),
+    ].join(","));
+  }
+
+  lines.push([
+    "TOTALE",
+    f(tt.docVendita),
+    f(tt.pos),
+    f(tt.totDelGiorno),
+    f(tt.banca),
+    f(tt.lekNeTeZeze),
+    f(tt.spesa),
+    f(tt.lekNeKassaforte),
+    f(tt.lekNeBustatTona),
+    f(tt.bustaEffetiva),
+    f(tt.diff),
+    f(tt.kassaforta)
+  ].join(","));
+
+  lines.push("");
+  lines.push("Spesa Mese,Importo");
+  for (const x of state.expenses) {
+    const name = String(x.name || "").replaceAll(",", " ");
+    lines.push(`${name},${f(x.amount)}`);
+  }
+  lines.push(`Totale Spese Mese,${f(te)}`);
+  lines.push(`SOLDI IN CASA,${f(soldi)}`);
+
+  const csv = lines.join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+
+  const mi = String(toNumber(monthSelect.value) + 1).padStart(2, "0");
+  const fileName = `Arca_${yearInput.value}_${mi}.csv`;
+
+  // iOS: usa Web Share se disponibile
+  const file = new File([blob], fileName, { type: "text/csv" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: "Arca CSV" }).catch(()=>{});
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showToast("CSV scaricato");
+  }
+}
+
+function backupJSON() {
+  const state = loadState();
+  const mi = String(toNumber(monthSelect.value) + 1).padStart(2, "0");
+  const fileName = `Arca_${yearInput.value}_${mi}.json`;
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json;charset=utf-8" });
+  const file = new File([blob], fileName, { type: "application/json" });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: "Arca Backup JSON" }).catch(()=>{});
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showToast("Backup JSON scaricato");
+  }
+}
+
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!parsed || typeof parsed !== "object") throw new Error("JSON non valido");
+      if (!Array.isArray(parsed.entries)) parsed.entries = [];
+      if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
+      while (parsed.expenses.length < 15) parsed.expenses.push({ name: "", amount: 0 });
+      if (parsed.expenses.length > 15) parsed.expenses = parsed.expenses.slice(0,15);
+
+      saveState(parsed);
+      showToast("Import completato");
+      render();
+    } catch (e) {
+      alert("Errore import JSON: " + e.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Init
+function init() {
+  // Mesi
+  monthSelect.innerHTML = "";
+  MONTHS.forEach((m, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = m;
+    monthSelect.appendChild(opt);
+  });
+
+  // Default mese/anno attuali
+  const d = new Date();
+  monthSelect.value = d.getMonth();
+  yearInput.value = d.getFullYear();
+
+  // Eventi
+  monthSelect.addEventListener("change", render);
+  yearInput.addEventListener("change", render);
+
+  btnAddDay.addEventListener("click", addDay);
+  btnResetMonth.addEventListener("click", resetMonth);
+
+  btnExportCSV.addEventListener("click", exportCSV);
+  btnBackup.addEventListener("click", backupJSON);
+
+  importFile.addEventListener("change", (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (f) importJSON(f);
+    importFile.value = "";
+  });
+
+  // PWA install prompt (Android/desktop). iOS usa "Aggiungi a Home"
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const b = $("btnInstall");
+    b.style.display = "inline-flex";
+    b.addEventListener("click", async () => {
+      try {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+      } catch {}
+      deferredPrompt = null;
+      b.style.display = "none";
+    }, { once: true });
+  });
+
+  render();
+
+  // Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+}
+
+init();
+</script>
+</body>
+</html>
